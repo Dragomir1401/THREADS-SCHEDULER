@@ -1,0 +1,108 @@
+==4140== Memcheck, a memory error detector
+==4140== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==4140== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==4140== Command: ./_test/run_test 20
+==4140== Parent PID: 4139
+==4140== 
+==4140== Invalid read of size 4
+==4140==    at 0x484C563: add (queue.c:10)
+==4140==    by 0x484C32E: so_fork (threads_scheduler.c:430)
+==4140==    by 0x10B581: test_sched_21 (test_io.c:225)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140==  Address 0x8 is not stack'd, malloc'd or (recently) free'd
+==4140== 
+==4140== 
+==4140== Process terminating with default action of signal 11 (SIGSEGV)
+==4140==  Access not within mapped region at address 0x8
+==4140==    at 0x484C563: add (queue.c:10)
+==4140==    by 0x484C32E: so_fork (threads_scheduler.c:430)
+==4140==    by 0x10B581: test_sched_21 (test_io.c:225)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140==  If you believe this happened as a result of a stack
+==4140==  overflow in your program's main thread (unlikely but
+==4140==  possible), you can try to increase the size of the
+==4140==  main thread stack using the --main-stacksize= flag.
+==4140==  The main thread stack size used in this run was 4194304.
+==4140== 
+==4140== HEAP SUMMARY:
+==4140==     in use at exit: 3,119,436 bytes in 264 blocks
+==4140==   total heap usage: 264 allocs, 0 frees, 3,119,436 bytes allocated
+==4140== 
+==4140== 80 bytes in 1 blocks are still reachable in loss record 1 of 9
+==4140==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B5C7: alloc_scheduler (threads_scheduler.c:44)
+==4140==    by 0x484B9BE: so_init (threads_scheduler.c:147)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 272 bytes in 1 blocks are possibly lost in loss record 2 of 9
+==4140==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x40149CA: allocate_dtv (dl-tls.c:286)
+==4140==    by 0x40149CA: _dl_allocate_tls (dl-tls.c:532)
+==4140==    by 0x4863322: allocate_stack (allocatestack.c:622)
+==4140==    by 0x4863322: pthread_create@@GLIBC_2.2.5 (pthread_create.c:660)
+==4140==    by 0x484C2D5: so_fork (threads_scheduler.c:423)
+==4140==    by 0x10B581: test_sched_21 (test_io.c:225)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 1,028 bytes in 1 blocks are still reachable in loss record 3 of 9
+==4140==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B7CC: alloc_waiting_threads (threads_scheduler.c:98)
+==4140==    by 0x484B9D8: so_init (threads_scheduler.c:150)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 2,056 bytes in 1 blocks are still reachable in loss record 4 of 9
+==4140==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B699: alloc_waiting_threads (threads_scheduler.c:76)
+==4140==    by 0x484B9D8: so_init (threads_scheduler.c:150)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 4,000 bytes in 1 blocks are still reachable in loss record 5 of 9
+==4140==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B4EA: alloc_real_threads (threads_scheduler.c:20)
+==4140==    by 0x484B64C: alloc_scheduler (threads_scheduler.c:62)
+==4140==    by 0x484B9BE: so_init (threads_scheduler.c:147)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 12,000 bytes in 1 blocks are still reachable in loss record 6 of 9
+==4140==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B496: alloc_scheduler_list_of_threads (threads_scheduler.c:10)
+==4140==    by 0x484B632: alloc_scheduler (threads_scheduler.c:57)
+==4140==    by 0x484B9BE: so_init (threads_scheduler.c:147)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 12,000 bytes in 1 blocks are still reachable in loss record 7 of 9
+==4140==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B551: alloc_queue (threads_scheduler.c:31)
+==4140==    by 0x484B666: alloc_scheduler (threads_scheduler.c:67)
+==4140==    by 0x484B9BE: so_init (threads_scheduler.c:147)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 16,000 bytes in 1 blocks are still reachable in loss record 8 of 9
+==4140==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B897: alloc_semaphores (threads_scheduler.c:114)
+==4140==    by 0x484B9F2: so_init (threads_scheduler.c:153)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== 3,072,000 bytes in 256 blocks are still reachable in loss record 9 of 9
+==4140==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==4140==    by 0x484B72D: alloc_waiting_threads (threads_scheduler.c:86)
+==4140==    by 0x484B9D8: so_init (threads_scheduler.c:150)
+==4140==    by 0x10B570: test_sched_21 (test_io.c:223)
+==4140==    by 0x10962B: main (run_test.c:120)
+==4140== 
+==4140== LEAK SUMMARY:
+==4140==    definitely lost: 0 bytes in 0 blocks
+==4140==    indirectly lost: 0 bytes in 0 blocks
+==4140==      possibly lost: 272 bytes in 1 blocks
+==4140==    still reachable: 3,119,164 bytes in 263 blocks
+==4140==         suppressed: 0 bytes in 0 blocks
+==4140== 
+==4140== For lists of detected and suppressed errors, rerun with: -s
+==4140== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)
