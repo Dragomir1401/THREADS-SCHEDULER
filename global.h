@@ -1,0 +1,1 @@
+// global declarations of structures
