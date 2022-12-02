@@ -4,8 +4,20 @@
 #include "constants.h"
 #include "scheduler_struct.h"
 
-void queue_add(queue_thread thread)
-{
+void free_resources() {
+    for (int i = 0; i < LIMIT_IO; i++) {
+        free(thread_mat[i]);
+    }
+    free(thread_mat);
+    free(row_size);
+
+    free(scheduler->list_of_threads);
+    free(scheduler->threads);
+    free(scheduler->queue);
+    free(scheduler);
+}
+
+void queue_add(queue_thread thread) {
     // find the place in queue for the new thread
     int index = 0, i;
 
@@ -26,25 +38,21 @@ void queue_add(queue_thread thread)
     scheduler->queue[index] = thread;
 }
 
-void queue_remove()
-{
+void queue_remove() {
     // deletes first element from queue
-    for (int i = 0; i < scheduler->size - 1; i++)
-    {
-        scheduler->queue[i] = scheduler->queue[i + 1];
-    }
+    memmove(&scheduler->queue[0], &scheduler->queue[1], scheduler->size * sizeof(queue_thread));
 
+    // decrement size
     scheduler->size--;
 }
 
-int set_main_thread_from_queue()
-{
+int set_main_thread_from_queue() {
     queue_thread new_thread = scheduler->queue[0];
 
     scheduler->main_thread = new_thread;
     scheduler->main_thread_id = new_thread.thread_id;
     scheduler->main_thread.time_quantum = scheduler->quantum;
-    scheduler->main_thread.status = RUNNING_STATE;
+    scheduler->main_thread.status = RUNNING;
 
     queue_remove();
 
@@ -164,16 +172,7 @@ int alloc_thread_mat() {
 int alloc_semaphores() {
     semaphores = malloc(sizeof(sem_t) * MAX);
     if (semaphores == NULL) {
-        free(row_size);
-        for (int i = 0; i < LIMIT_IO; i++)
-        {
-            free(thread_mat[i]);
-        }
-        free(thread_mat);
-        free(scheduler->list_of_threads);
-        free(scheduler->threads);
-        free(scheduler->queue);
-        free(scheduler);
+        free_resources();
         return EXIT_ERROR;
     }
 
@@ -181,7 +180,7 @@ int alloc_semaphores() {
     return 0;
 }
 
-DECL_PREFIX int so_init(unsigned int time_quantum, unsigned int io)
+int so_init(unsigned int time_quantum, unsigned int io)
 {
     // initialise scheduler
     // returns 0 for error, negative for error
@@ -215,7 +214,7 @@ DECL_PREFIX int so_init(unsigned int time_quantum, unsigned int io)
     return EXIT_ERROR;
 }
 
-DECL_PREFIX int so_wait(unsigned int io)
+int so_wait(unsigned int io)
 {
     // current thread blocks in case of event
     // return 0 for existing event else negative value for error
@@ -226,7 +225,7 @@ DECL_PREFIX int so_wait(unsigned int io)
 
     // put thread int the waiting line for the io operation
     thread_mat[io][row_size[io]] = scheduler->main_thread;
-    scheduler->main_thread.status = WAITING_STATE;
+    scheduler->main_thread.status = WAITING;
     row_size[io]++;
 
     so_exec();
@@ -238,7 +237,7 @@ void signal_row(unsigned int io) {
     int cnt = 0;
     while (cnt < row_size[io]) {
         // set status for signaled thread
-        thread_mat[io][cnt].status = READY_STATE;
+        thread_mat[io][cnt].status = READY;
 
         // add the new ready thread in thread queue
         queue_add(thread_mat[io][cnt]);
@@ -250,7 +249,7 @@ void signal_row(unsigned int io) {
     }
 }
 
-DECL_PREFIX int so_signal(unsigned int io)
+int so_signal(unsigned int io)
 {
     // signals threads that wait for an event
     // threads that are signaled enter in the prio queue
@@ -271,8 +270,7 @@ DECL_PREFIX int so_signal(unsigned int io)
     return result;
 }
 
-int change_threads()
-{   
+int change_threads() {   
 
     queue_thread main = scheduler->main_thread;
 
@@ -280,7 +278,7 @@ int change_threads()
     scheduler->main_thread = scheduler->queue[0];
     scheduler->main_thread_id = scheduler->queue[0].thread_id;
     scheduler->main_thread.time_quantum = scheduler->quantum;
-    scheduler->main_thread.status = RUNNING_STATE;
+    scheduler->main_thread.status = RUNNING;
 
     main.time_quantum = scheduler->quantum;
 
@@ -296,12 +294,11 @@ int change_threads()
     return 0;
 }
 
-int schedule_case_one()
-{
+int schedule_case_one() {
     // schedule thread when the prio queue is not empty
 
     // if status is termianted or waiting set new thread
-    if (scheduler->main_thread.status == TERMINATED_STATE || scheduler->main_thread.status == WAITING_STATE) {
+    if (scheduler->main_thread.status == TERMINATED || scheduler->main_thread.status == WAITING) {
         if (set_main_thread_from_queue())
             return EXIT_ERROR;
         return 0;
@@ -330,7 +327,7 @@ int schedule_case_one()
             // choose the same thread
             // reset its time quantum
             scheduler->main_thread.time_quantum = scheduler->quantum;
-            scheduler->main_thread.status = RUNNING_STATE;
+            scheduler->main_thread.status = RUNNING;
 
             if (sem_post(&semaphores[scheduler->main_thread_id]))
                 return EXIT_ERROR;
@@ -339,27 +336,26 @@ int schedule_case_one()
     } 
 
     // choose the same thread even if its time didnt end
-    scheduler->main_thread.status = RUNNING_STATE;
+    scheduler->main_thread.status = RUNNING;
     if (sem_post(&semaphores[scheduler->main_thread_id]))
         return EXIT_ERROR;
        
     return 0;
 }
 
-int schedule_case_two()
-{
+int schedule_case_two() {
     // schedule thread when the prio queue is empty
     if (scheduler->main_thread.time_quantum <= 0) {
         // choose the same thread
         // reset its time quantum
         scheduler->main_thread.time_quantum = scheduler->quantum;
-        scheduler->main_thread.status = RUNNING_STATE;
+        scheduler->main_thread.status = RUNNING;
 
         if (sem_post(&semaphores[scheduler->main_thread_id]))
             return EXIT_ERROR;
     } else {
         // choose the same thread even if its time didnt end because there is no better candidate
-        scheduler->main_thread.status = RUNNING_STATE;
+        scheduler->main_thread.status = RUNNING;
 
         if (sem_post(&semaphores[scheduler->main_thread_id]))
             return EXIT_ERROR;
@@ -372,7 +368,7 @@ int decide_thread() {
     // if current thread is finished and in queue we dont have a candidate
 
     if (scheduler->main_thread_id != -1) {
-        if (scheduler->main_thread.status == TERMINATED_STATE && !scheduler->size)
+        if (scheduler->main_thread.status == TERMINATED && !scheduler->size)
             return 0;
     }
 
@@ -407,8 +403,7 @@ int decide_thread() {
     return 0;
 }
 
-DECL_PREFIX void so_exec()
-{
+void so_exec() {
 
     // decrement time quantum of current thread
     scheduler->main_thread.time_quantum--;
@@ -430,8 +425,7 @@ DECL_PREFIX void so_exec()
         return;
 }
 
-void *start_thread(void *args)
-{
+void *start_thread(void *args) {
     queue_thread *thread = (queue_thread *)args;
 
     // wait for schedule
@@ -440,8 +434,8 @@ void *start_thread(void *args)
 
     thread->handler(thread->prio);
     // terminate thread
-    thread->status = TERMINATED_STATE;
-    scheduler->main_thread.status = TERMINATED_STATE;
+    thread->status = TERMINATED;
+    scheduler->main_thread.status = TERMINATED;
 
     // schedule
     if (decide_thread())
@@ -455,8 +449,7 @@ void *start_thread(void *args)
     return NULL;
 }
 
-DECL_PREFIX tid_t so_fork(so_handler *handler, unsigned int prio)
-{
+tid_t so_fork(so_handler *handler, unsigned int prio) {
     // introduces a new thread
     if (scheduler_state == UNINITIALISED || prio > 5 || handler == NULL)
         return INVALID_TID;
@@ -470,7 +463,7 @@ DECL_PREFIX tid_t so_fork(so_handler *handler, unsigned int prio)
     // initiliase thread with new data; no_threads means last thread in list
     scheduler->list_of_threads[last].thread_id = scheduler->no_threads;
     scheduler->list_of_threads[last].time_quantum = scheduler->quantum;
-    scheduler->list_of_threads[last].status = READY_STATE;
+    scheduler->list_of_threads[last].status = READY;
     if (sem_init(&semaphores[last], 0, 0))
         return INVALID_TID;
 
@@ -492,22 +485,7 @@ DECL_PREFIX tid_t so_fork(so_handler *handler, unsigned int prio)
     return scheduler->threads[last];
 }
 
-void free_resources() {
-    for (int i = 0; i < LIMIT_IO; i++) {
-        free(thread_mat[i]);
-    }
-    free(thread_mat);
-    free(row_size);
-
-    free(scheduler->list_of_threads);
-    free(scheduler->threads);
-    free(scheduler->queue);
-    free(semaphores);
-    free(scheduler);
-}
-
-DECL_PREFIX void so_end()
-{
+void so_end() {
     // free resources and end scheduler
     if (scheduler_state == UNINITIALISED)
         return;
@@ -536,6 +514,7 @@ DECL_PREFIX void so_end()
         return;
 
     free_resources();
+    free(semaphores);
 
     // set state to uinitialised
     scheduler_state = UNINITIALISED;
