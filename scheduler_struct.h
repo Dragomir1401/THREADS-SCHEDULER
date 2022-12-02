@@ -1,6 +1,7 @@
-#include "so_scheduler.h"
 #include <pthread.h>
 #include <semaphore.h>
+#include "so_scheduler.h"
+#include "constants.h"
 
 
 typedef struct queue_thread {
@@ -25,7 +26,7 @@ typedef struct scheduler_struct {
     queue_thread *queue;
 
     // priority queue size
-    unsigned int size;
+    int size;
 
     // actual list of threads
     queue_thread *list_of_threads;
@@ -50,12 +51,20 @@ typedef struct scheduler_struct {
 
 } scheduler_struct;
 
-// global declarations of structures
 static scheduler_struct *scheduler;
+// matrix to store threads waiting on every operation
+static queue_thread **thread_mat;
 static sem_t *semaphores;
 static sem_t sem_term;
 static pthread_mutex_t mutex;
 static unsigned scheduler_state;
-// matrix to store threads waiting on every operation
-static queue_thread **thread_mat;
 static int *row_size;
+
+void add_in(queue_thread t);
+void delete_from();
+int set_main_thread_from_queue();
+void *start_thread(void *args);
+int change_threads();
+int schedule_case_one();
+int schedule_case_two();
+int decide_thread();
