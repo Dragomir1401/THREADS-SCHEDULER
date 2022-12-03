@@ -1,0 +1,172 @@
+______________________________
+|                            |
+|   Copyright                |
+|      Dragomir Andrei 2022  |
+|                            |
+|____________________________|
+
+---------------------------------------------------------------------
+Nume: Dragomir Andrei
+Grupa: 322CA
+
+OPERATING SYSTEMS
+
+----------------------------------------------------------------------------
+------------------------POSIX THREADS SCHEDULER-----------------------------
+---------------------------------------------------------------------------- 
+
+								CONTENT
+
+	- threads_scheduler.c - implementation of the scheduler using Round Robin
+							algorithm with priority queue
+	- auxiliary files - constants.h so_scheduler.h scheduler_struct.h
+	- Makefile
+	- README
+
+
+----------------------------------------------------------------------------
+
+____________Description___________
+
+
+	The project implements a preemptive thread scheduler in an uniprocessor
+environemnt. It uses a Round Robin algorithm with priority queue. The program
+creates an shared library object that will get loaded by the scheduled threads. 
+
+	The system uses a virtual time logic separated from real time sequence.
+Each instruction takes only one unit of logic time, and each core fucntion
+represents an unique instruction that can be executed by only one thread at 
+a time. 
+
+	Round Robin algorithm consists of associating a static priority to every 
+thread and using a priority queue to track what thread is goind to take action. 
+The highest priority is always first in queue and gets chosen first.
+	Threads have 5 different states in this approach:
+
+	   - New - new thread created following a call of fork.
+	   - Ready - waiting to be planned.
+	   - Running - scheduled - only one thread can run at a time.
+	   - Waiting - waits after an event or I/O operation. 
+				 A thread will hang in the wait state following 
+				 the so_wait(event/io) call.
+	   - Terminated - completed its execution.
+
+
+-----------------------------------------------------------------------------
+
+
+
+------------------------------------------------------------------------------
+
+____________Implementation____________
+
+
+	The schedduler is organised using a structure with the most important 
+elements being the priority queue, the list of threads and the list of real 
+threads. It also tracks the thread currently executing actions(the main thread). 
+Threads are represented with a structure cotaining information such as: priority,
+thread status, thread handler, thread id and also its time quantum.
+
+	As a way to manipulate order of threads on processor I used an array of
+semaphores with correspondence using id. Sem_term tracks if each thread
+finished execution. The priority queue is built using methods like: add based
+on priority, remove first and pop thread from queue into running thread role.
+
+
+------------------------------------------------------------------------------
+
+
+
+
+------------------------------------------------------------------------------
+
+____________Functios____________
+
+
+	Each function starts with memory and limitations checks.
+
+						SO_INIT()
+
+	Initialised and allocated memory for the scheduler struct, semaphores and
+the waiting threads matrix. 
+
+						SO_EXEC()
+	
+	Decrease the quantum as the thread executes a task then gets rescheduled
+and blocked in waiting status using semaphores.
+
+						SO_WAIT()
+
+	Mark thread as waiting and add it to the waiting threads matrix on the line
+coresponding to the io on which it gets to wait for. 
+
+						SO_END()
+
+	Free all resources, including destroying the semaphores array after we wait
+for all threads to finish and join them. The free_resources function uses an 
+shorter recursive approach of freeing all allocated structures.
+
+						SO_SIGNAL()
+
+	Wakes up all threads on a specific line in the waiting threads matrix by
+changing their status to ready and then reschedule the threads.
+
+						SO_FORK()
+
+	Initialise the new thread then create the actual thread using POSIX pthread
+create and also initialise its semaphore. After creation we add the new thread in
+the queue with the specific function. The start_thread routine used at creation
+of the new thread. It basically waits for schedule then executes its function 
+before being marked as finished.
+
+						DECIDE_THREAD()
+
+	Its the function that does the actual scheduling by changing the threads
+based on context and priority. It treats two different cases: one where we have
+candidates in the priority queue and the other where it is empty.
+	
+
+
+------------------------------------------------------------------------------
+
+
+
+------------------------------------------------------------------------------
+
+_____________Comments_____________
+
+	
+	The implementation could have been done faster and better if information 
+about scheduling threads would have been better presented in the laboratory. 
+There could be perhaps a shorter close POSIX API version of the functions
+but this way had a better logic for me, using extra error checks behind.
+
+	The project was very useful in helping me learn how to use Linux API 
+for workind with synchronizing threads and planning processes. The most
+interesting part was to schedule the threads for each corner case and 
+deallocate memory. The hardest part was figuring out how to structure the 
+project.  
+
+------------------------------------------------------------------------------
+
+______________How to run it_____________
+
+	make
+- creates the libscheduler.so shared object
+
+First we need a copy of the .so file in the checker or a symbolic link to it
+
+	make -f Makefile.checker or ./run_all.sh from the checker folder
+- use the shared library in tests from checker
+
+-----------------------------------------------------------------------------
+
+Resources:
+
+https://ocw.cs.pub.ro/courses/so/cursuri/curs-04
+https://ocw.cs.pub.ro/courses/so/cursuri/curs-09
+https://ocw.cs.pub.ro/courses/so/laboratoare/laborator-08
+https://ocw.cs.pub.ro/courses/so/teme/tema-4
+
+
+-----------------------------------------------------------------------------
